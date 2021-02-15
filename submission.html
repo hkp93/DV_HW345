@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<!-- cse6242 s21 -->
+
+<!-- run: http-server & -->
+
+<head>
+    <style>
+        <!-- define CSS rules -->
+    </style>
+</head>
+
+<body>
+
+    <script src="lib/d3/d3.min.js"></script>
+    <script src="lib/d3-dsv/d3-dsv.min.js"></script>
+    <script src="lib/d3-fetch/d3-fetch.min.js"></script>
+
+    <script>
+        /* SOURCES 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     1. https://stackoverflow.com/questions/11189284/d3-axis-labeling   
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        */
+        /********* Base code start ***********/
+
+        var totalList = [];
+        var yearList = [];
+        // define the dimensions and margins for the graph
+        var h = 500;
+        var w = 960;
+        var barPadding = 1;
+        var barWidth = 7;
+
+
+
+        // define function to parse time in years format
+        function parseYear(y) {
+            var year = new Date(y);
+            return year;
+        }
+
+        // create scales x & y for X and Y axis and set their ranges
+        var x = d3.scaleTime().range([0, w]);
+        var y = d3.scaleLinear().range([h, 0]);
+
+        // append svg element to the body of the page
+        // set dimensions and position of the svg element
+        var svg = d3.select("body")
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h);
+        /* var margin = {
+                top: 20,
+                right: 20,
+                bottom: 300,
+                left: 40
+            },
+            width = +svg.attr("width") - margin.left - margin.right,
+            height = +svg.attr("height") - margin.top - margin.bottom; */
+
+        // Get the data
+        var pathToCsv = "q3.csv"; // path to csv
+
+        d3.dsv(",", pathToCsv, function(d) {
+            totalList.push(+d["running_total"]);
+            yearList.push(+d["year"]);
+
+            return {
+                year: parseYear(d["year"]),
+                total: +d["running_total"]
+            }
+
+        }).then(function(data) {
+            console.log(data); // you should see the data in your browser's developer tools console 
+            //console.log("total ", totalList)
+            //console.log("year ", yearList)
+
+            // set the domains of X and Y scales based on data
+            //x.domain();
+            //y.domain();
+
+            x.domain(d3.extent(data, function(d) {
+                return d.year;
+            }));
+
+            y.domain([0, d3.max(data, function(d) {
+                return d.total;
+            })]);
+
+            // Add bars to svg - create new elements based on your data
+            //svg.selectAll()
+            var g = svg.append("g")
+                .attr("transform", "translate(80,20)");
+            var barChart = g.selectAll("rect")
+                .data(data)
+                .enter()
+                .append("rect")
+                .attr("y", function(d) {
+                    //console.log(d.total, y(d.total), h - y(d.total));
+                    return (y(d.total));
+                })
+                .attr("height", function(d) {
+                    return (h - y(d.total));
+                })
+                .attr("width", barWidth - barPadding)
+                .attr("transform", function(d, i) {
+                    var translate = [(barWidth * i), -20];
+                    return "translate(" + translate + ")";
+                });
+
+
+            // Add the X Axis
+            //svg.append()
+            var x_axis = d3.axisBottom()
+                .scale(x);
+            var diff = h - 30;
+            svg.append("g")
+                .attr("id", "x_axis")
+                .attr("transform", "translate(0," + diff + ")")
+                .call(x_axis);
+
+            svg.append("text")
+                .attr("id", "x_axis_label")
+                .attr("text-anchor", "end")
+                .attr("x", w)
+                .attr("y", h - 6)
+                .text("Year");
+
+            // Add the Y Axis
+            //svg.append()
+
+            var y_axis = d3.axisLeft()
+                .scale(y);
+
+            svg.append("g")
+                .attr("id", "y_axis")
+                .attr("transform", "translate(50,0)")
+                .call(y_axis);
+
+            svg.append("text")
+                .attr("id", "y_axis_label")
+                .attr("text-anchor", "end")
+                .attr("y", -20)
+                .attr("x", h / 3 * -1)
+                .attr("dy", ".75em")
+                .attr("transform", "rotate(-90)")
+                .text("Running Total");
+
+            svg.append("text")
+                .attr("id", "credit")
+                .attr("text-anchor", "start")
+                .attr("x", w - 160)
+                .attr("y", h)
+                .text("hpatel405");
+
+            svg.append("title")
+                .attr("id", "title")
+                .attr("text-anchor", "start")
+                .text("Running Total of TMDb Movies by Year");
+
+
+        }).catch(function(error) {
+            console.log(error);
+        });
+
+        /*************** Base code - END ***********/
+    </script>
+
+</body>
